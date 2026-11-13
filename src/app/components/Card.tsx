@@ -16,3 +16,39 @@ export function CardTitle({ icon: Icon, children, aside }: { icon: LucideIcon; c
     </div>
   );
 }
+
+/** Controle segmentado (ex.: Escuro / Claro / Sistema) */
+export function Segmented<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: { value: T; label: string; icon?: LucideIcon }[];
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div role="radiogroup" aria-label={label} className="flex gap-1 p-1 rounded-xl bg-muted border border-border">
+      {options.map(({ value: v, label: l, icon: Icon }) => {
+        const selected = v === value;
+        return (
+          <button
+            key={v}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(v)}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              selected ? "bg-card text-foreground shadow-sm border border-border" : "text-dim hover:text-soft border border-transparent"
+            }`}
+          >
+            {Icon && <Icon size={12} aria-hidden="true" />}
+            {l}
+          </button>
+        );
+      })}
+    </div>
+  );
+}

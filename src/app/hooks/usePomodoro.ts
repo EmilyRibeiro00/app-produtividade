@@ -1,12 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import type { SessionType, Settings } from "../types";
-import { formatClock } from "../lib/date";
-
-export const SESSION_LABEL: Record<SessionType, string> = {
-  work: "Focus",
-  "short-break": "Short Break",
-  "long-break": "Long Break",
-};
 
 /**
  * Timer Pomodoro baseado no relógio real (não atrasa em abas em segundo plano).
@@ -80,11 +73,6 @@ export function usePomodoro(
     if (!isRunning && timeLeft === 0) advance(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, timeLeft]);
-
-  // Tempo restante no título da aba enquanto o timer roda
-  useEffect(() => {
-    document.title = isRunning ? `${formatClock(timeLeft)} · ${SESSION_LABEL[sessionType]} — Nocturne` : "Nocturne";
-  }, [isRunning, timeLeft, sessionType]);
 
   return {
     sessionType,

@@ -75,6 +75,51 @@
   --sidebar-ring: var(--ring);
 }
 
+/* Tema claro — pergaminho com o mesmo vinho gótico */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --background: #F6F3EF;
+  --sidebar: #EFEBE6;
+  --card: #FFFFFF;
+  --surface-2: #F3EFEA;
+  --muted: #EDE8E2;
+
+  --border: #DDD5CD;
+  --line: #E7E1DA;
+  --line-strong: #C7BDB3;
+
+  --foreground: #1C1517;
+  --soft: #2F2629;
+  --muted-foreground: #574D50;
+  --dim: #6B6064;
+  --faint: #B5AAA5;
+
+  --primary: #8B1E2D;
+  --primary-strong: #6A1520;
+  --primary-soft: #A3283A;
+  --accent: #3A214D;
+  --accent-soft: #6B3F8F;
+
+  --priority-high: #B3263A;
+  --priority-medium: #87610F;
+  --priority-low: #2C7544;
+
+  --heat-0: #EDE8E2;
+  --heat-1: #F2CDD3;
+  --heat-2: #DE909C;
+  --heat-3: #BF4A5C;
+  --heat-4: #8B1E2D;
+
+  --ring: #A3283A;
+  --popover: #FFFFFF;
+  --secondary: #E7E1DA;
+  --input: #FFFFFF;
+  --input-background: #FFFFFF;
+  --switch-background: #CFC6BD;
+  --sidebar-accent: #E7E1DA;
+}
+
 @theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
@@ -163,10 +208,8 @@
     outline-offset: 2px;
   }
 
-  /* Ícones nativos de data/hora visíveis no tema escuro */
-  input[type="date"],
-  input[type="time"] {
-    color-scheme: dark;
+  body {
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   @media (prefers-reduced-motion: reduce) {

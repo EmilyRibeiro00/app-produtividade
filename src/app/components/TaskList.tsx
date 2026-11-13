@@ -3,6 +3,7 @@ import { CheckCircle2, Circle, Clock, Edit2, ListTodo, Trash2 } from "lucide-rea
 import type { Task } from "../types";
 import { PRIORITY_CONFIG } from "../constants";
 import { formatRelativeDay } from "../lib/date";
+import { useT } from "../lib/i18n";
 
 interface ItemHandlers {
   onToggle: (id: string) => void;
@@ -48,6 +49,7 @@ export function TaskList({ title, tasks, today, now, emptyText, showDate, action
 }
 
 function TaskItem({ task, today, now, showDate, onToggle, onDelete, onRename }: { task: Task; today: string; now: string; showDate?: boolean } & ItemHandlers) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
 
@@ -66,7 +68,7 @@ function TaskItem({ task, today, now, showDate, onToggle, onDelete, onRename }: 
     <li className="flex items-center gap-3 px-3 sm:px-4 py-3 rounded-xl border border-line bg-card group transition-colors hover:border-line-strong">
       <button
         onClick={() => onToggle(task.id)}
-        aria-label={task.completed ? `Mark "${task.title}" as not done` : `Mark "${task.title}" as done`}
+        aria-label={task.completed ? t.task.markUndone(task.title) : t.task.markDone(task.title)}
         aria-pressed={task.completed}
         className={`shrink-0 transition-colors ${task.completed ? "text-primary-soft" : "text-faint hover:text-dim"}`}
       >
@@ -83,7 +85,7 @@ function TaskItem({ task, today, now, showDate, onToggle, onDelete, onRename }: 
               if (e.key === "Enter") save();
               if (e.key === "Escape") setEditing(false);
             }}
-            aria-label="Edit task title"
+            aria-label={t.task.editTitle}
             className="bg-transparent outline-none w-full text-[13px] border-b border-primary-soft"
             autoFocus
           />
@@ -97,39 +99,39 @@ function TaskItem({ task, today, now, showDate, onToggle, onDelete, onRename }: 
         )}
         {/* Metadados abaixo do título no celular */}
         <div className="flex sm:hidden items-center gap-2 mt-1 text-[11px] text-dim">
-          <span className={`px-1.5 rounded ${PRIORITY_CONFIG[task.priority].badge}`}>{PRIORITY_CONFIG[task.priority].label}</span>
+          <span className={`px-1.5 rounded ${PRIORITY_CONFIG[task.priority].badge}`}>{t.priority[task.priority]}</span>
           <span className={overdue ? "text-priority-high" : ""}>
-            {showDate || overdue ? `${formatRelativeDay(task.dueDate)} · ` : ""}
+            {showDate || overdue ? `${formatRelativeDay(t, task.dueDate)} · ` : ""}
             {task.dueTime}
           </span>
         </div>
       </div>
 
       <span className={`hidden sm:inline text-[11px] px-2 py-0.5 rounded-md font-medium shrink-0 ${PRIORITY_CONFIG[task.priority].badge}`}>
-        {PRIORITY_CONFIG[task.priority].label}
+        {t.priority[task.priority]}
       </span>
 
       <div className={`hidden sm:flex items-center gap-1 shrink-0 text-[11px] ${overdue ? "text-priority-high" : "text-dim"}`}>
         <Clock size={11} aria-hidden="true" />
         <span>
-          {showDate || overdue ? `${formatRelativeDay(task.dueDate)} · ` : ""}
+          {showDate || overdue ? `${formatRelativeDay(t, task.dueDate)} · ` : ""}
           {task.dueTime}
         </span>
-        {overdue && <span className="sr-only">(overdue)</span>}
+        {overdue && <span className="sr-only">({t.task.overdue})</span>}
       </div>
 
       {/* Sempre visível no toque; no desktop aparece no hover ou foco */}
       <div className="flex items-center gap-1 shrink-0 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity">
         <button
           onClick={startEdit}
-          aria-label={`Edit "${task.title}"`}
+          aria-label={t.task.edit(task.title)}
           className="w-7 h-7 rounded-lg flex items-center justify-center text-dim hover:bg-line hover:text-soft transition-colors"
         >
           <Edit2 size={12} />
         </button>
         <button
           onClick={() => onDelete(task.id)}
-          aria-label={`Delete "${task.title}"`}
+          aria-label={t.task.remove(task.title)}
           className="w-7 h-7 rounded-lg flex items-center justify-center text-dim hover:bg-primary/20 hover:text-priority-high transition-colors"
         >
           <Trash2 size={12} />

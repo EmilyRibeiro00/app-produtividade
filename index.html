@@ -10,6 +10,15 @@
       <meta name="description" content="Enhance productivity with a sleek task manager featuring Pomodoro timers, elegant design, and insightful statistics, perfect for focused individuals." />
       <meta name="robots" content="noindex, nofollow" />
       <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>
+      <script>
+        // Aplica o tema salvo antes do React carregar (evita piscar o tema errado)
+        try {
+          var s = JSON.parse(localStorage.getItem("nocturne.settings") || "{}");
+          var light = s.theme === "light" || (s.theme === "system" && matchMedia("(prefers-color-scheme: light)").matches);
+          document.documentElement.dataset.theme = light ? "light" : "dark";
+          if (s.language === "pt" || (!s.language && /^pt/i.test(navigator.language))) document.documentElement.lang = "pt-BR";
+        } catch (e) {}
+      </script>
       
     </head>
 

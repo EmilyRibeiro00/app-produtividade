@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Bell, Database, Timer, User } from "lucide-react";
-import { Card, CardTitle } from "./Card";
-import type { Settings } from "../types";
+import { Bell, Database, Monitor, Moon, Palette, Sun, Timer, User } from "lucide-react";
+import { Card, CardTitle, Segmented } from "./Card";
+import type { Settings, ThemeMode } from "../types";
 import { notificationsSupported, requestNotificationPermission } from "../lib/notify";
+import { useT, type Lang } from "../lib/i18n";
 
 interface SettingsViewProps {
   settings: Settings;
@@ -13,6 +14,7 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ settings, onChange, completedCount, onClearCompleted, onResetAll }: SettingsViewProps) {
+  const t = useT();
   const [permission, setPermission] = useState(() => (notificationsSupported() ? Notification.permission : "unsupported"));
 
   const toggleNotifications = async (on: boolean) => {
@@ -23,8 +25,39 @@ export function SettingsView({ settings, onChange, completedCount, onClearComple
   return (
     <div className="grid gap-4 lg:grid-cols-2 max-w-4xl">
       <Card>
-        <CardTitle icon={User}>Profile</CardTitle>
-        <Field label="Display name" hint="Used in the greeting.">
+        <CardTitle icon={Palette}>{t.settings.appearance}</CardTitle>
+        <div className="flex flex-col gap-4">
+          <div>
+            <span className="block text-xs font-medium text-muted-foreground mb-1.5">{t.settings.language}</span>
+            <Segmented<Lang>
+              label={t.settings.language}
+              value={settings.language}
+              onChange={(language) => onChange({ language })}
+              options={[
+                { value: "pt", label: "Português" },
+                { value: "en", label: "English" },
+              ]}
+            />
+          </div>
+          <div>
+            <span className="block text-xs font-medium text-muted-foreground mb-1.5">{t.settings.theme}</span>
+            <Segmented<ThemeMode>
+              label={t.settings.theme}
+              value={settings.theme}
+              onChange={(theme) => onChange({ theme })}
+              options={[
+                { value: "dark", label: t.settings.themeDark, icon: Moon },
+                { value: "light", label: t.settings.themeLight, icon: Sun },
+                { value: "system", label: t.settings.themeSystem, icon: Monitor },
+              ]}
+            />
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle icon={User}>{t.settings.profile}</CardTitle>
+        <Field label={t.settings.displayName} hint={t.settings.displayNameHint}>
           <input
             value={settings.name}
             onChange={(e) => onChange({ name: e.target.value.slice(0, 40) })}
@@ -34,54 +67,47 @@ export function SettingsView({ settings, onChange, completedCount, onClearComple
       </Card>
 
       <Card>
-        <CardTitle icon={Timer}>Timer</CardTitle>
+        <CardTitle icon={Timer}>{t.settings.timer}</CardTitle>
         <div className="grid grid-cols-2 gap-3">
-          <NumberField label="Focus (min)" value={settings.workMinutes} min={1} max={120} onChange={(v) => onChange({ workMinutes: v })} />
-          <NumberField label="Short break (min)" value={settings.shortBreakMinutes} min={1} max={60} onChange={(v) => onChange({ shortBreakMinutes: v })} />
-          <NumberField label="Long break (min)" value={settings.longBreakMinutes} min={1} max={90} onChange={(v) => onChange({ longBreakMinutes: v })} />
-          <NumberField label="Sessions per cycle" value={settings.sessionsPerCycle} min={2} max={8} onChange={(v) => onChange({ sessionsPerCycle: v })} />
+          <NumberField label={t.settings.focusMin} value={settings.workMinutes} min={1} max={120} onChange={(v) => onChange({ workMinutes: v })} />
+          <NumberField label={t.settings.shortMin} value={settings.shortBreakMinutes} min={1} max={60} onChange={(v) => onChange({ shortBreakMinutes: v })} />
+          <NumberField label={t.settings.longMin} value={settings.longBreakMinutes} min={1} max={90} onChange={(v) => onChange({ longBreakMinutes: v })} />
+          <NumberField label={t.settings.perCycle} value={settings.sessionsPerCycle} min={2} max={8} onChange={(v) => onChange({ sessionsPerCycle: v })} />
         </div>
-        <p className="mt-2 text-[11px] text-dim">Changes apply when the timer is paused.</p>
+        <p className="mt-2 text-[11px] text-dim">{t.settings.applyHint}</p>
         <div className="mt-3">
-          <Toggle label="Auto-start breaks" checked={settings.autoStartBreaks} onChange={(v) => onChange({ autoStartBreaks: v })} />
+          <Toggle label={t.settings.autoStart} checked={settings.autoStartBreaks} onChange={(v) => onChange({ autoStartBreaks: v })} />
         </div>
       </Card>
 
       <Card>
-        <CardTitle icon={Bell}>Alerts</CardTitle>
+        <CardTitle icon={Bell}>{t.settings.alerts}</CardTitle>
         <div className="flex flex-col gap-1">
-          <Toggle label="Play a sound when a session ends" checked={settings.sound} onChange={(v) => onChange({ sound: v })} />
-          <Toggle
-            label="Browser notification when a session ends"
-            checked={settings.notifications}
-            disabled={permission === "unsupported"}
-            onChange={toggleNotifications}
-          />
-          {settings.notifications && permission === "denied" && (
-            <p className="text-[11px] text-priority-medium">Notifications are blocked in your browser settings for this site.</p>
-          )}
-          {permission === "unsupported" && <p className="text-[11px] text-dim">This browser does not support notifications.</p>}
+          <Toggle label={t.settings.sound} checked={settings.sound} onChange={(v) => onChange({ sound: v })} />
+          <Toggle label={t.settings.notifications} checked={settings.notifications} disabled={permission === "unsupported"} onChange={toggleNotifications} />
+          {settings.notifications && permission === "denied" && <p className="text-[11px] text-priority-medium">{t.settings.blocked}</p>}
+          {permission === "unsupported" && <p className="text-[11px] text-dim">{t.settings.unsupported}</p>}
         </div>
       </Card>
 
-      <Card>
-        <CardTitle icon={Database}>Data</CardTitle>
-        <p className="text-xs text-dim mb-3">Everything is stored only in this browser.</p>
+      <Card className="lg:col-span-2">
+        <CardTitle icon={Database}>{t.settings.data}</CardTitle>
+        <p className="text-xs text-dim mb-3">{t.settings.storedLocally}</p>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={onClearCompleted}
             disabled={completedCount === 0}
             className="px-3 py-2 rounded-lg text-xs font-medium border border-border bg-muted text-soft hover:border-line-strong disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Clear completed tasks ({completedCount})
+            {t.settings.clearCompleted(completedCount)}
           </button>
           <button
             onClick={() => {
-              if (window.confirm("Delete all tasks, focus history and settings? This cannot be undone.")) onResetAll();
+              if (window.confirm(t.settings.resetConfirm)) onResetAll();
             }}
             className="px-3 py-2 rounded-lg text-xs font-medium border border-primary/50 bg-primary/15 text-priority-high hover:bg-primary/25"
           >
-            Reset all data
+            {t.settings.resetAll}
           </button>
         </div>
       </Card>
@@ -138,7 +164,7 @@ function Toggle({ label, checked, disabled, onChange }: { label: string; checked
     >
       {label}
       <span className={`relative w-9 h-5 rounded-full shrink-0 transition-colors ${checked ? "bg-primary" : "bg-switch-background"}`}>
-        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-foreground transition-transform ${checked ? "translate-x-4.5" : "translate-x-0.5"}`} />
+        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-primary-foreground shadow-sm transition-transform ${checked ? "translate-x-4.5" : "translate-x-0.5"}`} />
       </span>
     </button>
   );

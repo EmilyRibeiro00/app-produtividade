@@ -25,7 +25,11 @@ export interface DayActivity {
 /** Pomodoros concluídos por dia, chave YYYY-MM-DD */
 export type History = Record<string, DayActivity>;
 
+export type ThemeMode = "dark" | "light" | "system";
+
 export interface Settings {
+  language: "en" | "pt";
+  theme: ThemeMode;
   name: string;
   workMinutes: number;
   shortBreakMinutes: number;

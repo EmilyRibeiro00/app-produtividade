@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import type { History, NavItem, NewTask, SessionType, Settings, Task } from "./types";
 import { DEFAULT_SETTINGS, makeInitialTasks, migrateHistory, migrateSettings, migrateTasks } from "./constants";
 import { usePersistentState } from "./lib/storage";
-import { addDays, dateKey, nowHHMM, todayKey } from "./lib/date";
+import { addDays, dateKey, formatClock, nowHHMM, todayKey } from "./lib/date";
 import { playChime, requestNotificationPermission, sendNotification } from "./lib/notify";
+import { DICTIONARIES, I18nProvider } from "./lib/i18n";
 import { usePomodoro } from "./hooks/usePomodoro";
 import { MobileNav, Sidebar } from "./components/Navigation";
 import { Header } from "./components/Header";
@@ -27,6 +28,20 @@ function useClock() {
   return clock;
 }
 
+/** true se o sistema operacional estiver no modo claro */
+function usePrefersLight() {
+  const query = "(prefers-color-scheme: light)";
+  const [light, setLight] = useState(() => window.matchMedia?.(query).matches ?? false);
+  useEffect(() => {
+    const mq = window.matchMedia?.(query);
+    if (!mq) return;
+    const onChange = (e: MediaQueryListEvent) => setLight(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return light;
+}
+
 export default function App() {
   const [activeNav, setActiveNav] = useState<NavItem>("today");
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,6 +50,19 @@ export default function App() {
   const [tasks, setTasks] = usePersistentState<Task[]>("nocturne.tasks", makeInitialTasks, migrateTasks);
   const [history, setHistory] = usePersistentState<History>("nocturne.history", {}, migrateHistory);
   const [settings, setSettings] = usePersistentState<Settings>("nocturne.settings", DEFAULT_SETTINGS, migrateSettings);
+  const updateSettings = (patch: Partial<Settings>) => setSettings((s) => ({ ...s, ...patch }));
+  const t = DICTIONARIES[settings.language] ?? DICTIONARIES.en;
+
+  // ── Tema e idioma ──
+  const prefersLight = usePrefersLight();
+  const resolvedTheme = settings.theme === "system" ? (prefersLight ? "light" : "dark") : settings.theme;
+  useEffect(() => {
+    document.documentElement.dataset.theme = resolvedTheme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", resolvedTheme === "light" ? "#F6F3EF" : "#0B0B0B");
+  }, [resolvedTheme]);
+  useEffect(() => {
+    document.documentElement.lang = t.locale;
+  }, [t.locale]);
 
   // ── Pomodoro ──
   const handleSessionEnd = (type: SessionType, completed: boolean, minutes: number) => {
@@ -48,10 +76,15 @@ export default function App() {
     if (!completed) return;
     if (settings.sound) playChime();
     if (settings.notifications) {
-      sendNotification(type === "work" ? "Focus session complete. Time for a break." : "Break is over. Back to focus.");
+      sendNotification(type === "work" ? t.pomodoro.workDone : t.pomodoro.breakDone);
     }
   };
   const pomodoro = usePomodoro(settings, handleSessionEnd);
+
+  // Tempo restante no título da aba enquanto o timer roda
+  useEffect(() => {
+    document.title = pomodoro.isRunning ? `${formatClock(pomodoro.timeLeft)} · ${t.pomodoro[pomodoro.sessionType]} — Nocturne` : "Nocturne";
+  }, [pomodoro.isRunning, pomodoro.timeLeft, pomodoro.sessionType, t]);
   const togglePomodoro = () => {
     if (!pomodoro.isRunning && settings.notifications) requestNotificationPermission();
     pomodoro.toggle();
@@ -69,7 +102,8 @@ export default function App() {
   const resetAll = () => {
     setTasks([]);
     setHistory({});
-    setSettings(DEFAULT_SETTINGS);
+    // mantém idioma e tema escolhidos
+    setSettings((s) => ({ ...DEFAULT_SETTINGS, language: s.language, theme: s.theme }));
     pomodoro.reset();
   };
 
@@ -96,35 +130,35 @@ export default function App() {
   const renderContent = () => {
     if (query) {
       const results = tasks.filter((t) => t.title.toLowerCase().includes(query)).sort(byDue);
-      return <TaskList {...listProps} title={`Results for “${searchQuery.trim()}”`} tasks={results} showDate emptyText="No tasks match your search." />;
+      return <TaskList {...listProps} title={t.search.results(searchQuery.trim())} tasks={results} showDate emptyText={t.search.empty} />;
     }
     switch (activeNav) {
       case "today":
         return (
           <>
             <TaskComposer key="today" onAdd={addTask} />
-            <TaskList {...listProps} title="Today" tasks={todayTasks} emptyText="No tasks here. The void awaits." />
+            <TaskList {...listProps} title={t.lists.today} tasks={todayTasks} emptyText={t.lists.emptyToday} />
           </>
         );
       case "upcoming":
         return (
           <>
             <TaskComposer key="upcoming" onAdd={addTask} defaultDate={dateKey(addDays(new Date(), 1))} />
-            <TaskList {...listProps} title="Upcoming" tasks={upcomingTasks} showDate emptyText="Nothing scheduled ahead." />
+            <TaskList {...listProps} title={t.lists.upcoming} tasks={upcomingTasks} showDate emptyText={t.lists.emptyUpcoming} />
           </>
         );
       case "completed":
         return (
           <TaskList
             {...listProps}
-            title="Completed"
+            title={t.lists.completed}
             tasks={completedTasks}
             showDate
-            emptyText="Nothing completed yet."
+            emptyText={t.lists.emptyCompleted}
             action={
               completedTasks.length > 0 && (
                 <button onClick={clearCompleted} className="text-[11px] text-dim hover:text-priority-high transition-colors">
-                  Clear all
+                  {t.lists.clearAll}
                 </button>
               )
             }
@@ -136,7 +170,7 @@ export default function App() {
         return (
           <SettingsView
             settings={settings}
-            onChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
+            onChange={updateSettings}
             completedCount={completedTasks.length}
             onClearCompleted={clearCompleted}
             onResetAll={resetAll}
@@ -156,11 +190,20 @@ export default function App() {
   );
 
   return (
+    <I18nProvider lang={settings.language}>
     <div className="flex h-dvh w-full overflow-hidden bg-background text-foreground">
       <Sidebar active={activeNav} onNavigate={navigate} counts={counts} name={settings.name} pomodorosToday={todayActivity.sessions} />
 
       <main className="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
-        <Header name={settings.name} search={searchQuery} onSearch={setSearchQuery} onOpenSettings={() => navigate("settings")} />
+        <Header
+          name={settings.name}
+          search={searchQuery}
+          onSearch={setSearchQuery}
+          onOpenSettings={() => navigate("settings")}
+          isLight={resolvedTheme === "light"}
+          onToggleTheme={() => updateSettings({ theme: resolvedTheme === "light" ? "dark" : "light" })}
+          onToggleLanguage={() => updateSettings({ language: settings.language === "pt" ? "en" : "pt" })}
+        />
 
         <div className="flex-1 overflow-y-auto no-scrollbar px-4 md:px-8 py-6 pb-24 md:pb-6">
           {/* Em telas menores o painel direito vira um bloco no topo das listas */}
@@ -183,5 +226,6 @@ export default function App() {
 
       <MobileNav active={activeNav} onNavigate={navigate} counts={counts} />
     </div>
+    </I18nProvider>
   );
 }

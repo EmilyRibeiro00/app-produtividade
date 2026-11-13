@@ -1,7 +1,8 @@
 import { Pause, Play, RotateCcw, SkipForward, Target } from "lucide-react";
 import { Card, CardTitle } from "./Card";
-import { SESSION_LABEL, type Pomodoro } from "../hooks/usePomodoro";
+import type { Pomodoro } from "../hooks/usePomodoro";
 import { formatClock } from "../lib/date";
+import { useT } from "../lib/i18n";
 
 const SIZE = 184;
 const C = SIZE / 2;
@@ -9,6 +10,7 @@ const RADIUS = 86;
 const CIRC = 2 * Math.PI * RADIUS;
 
 export function PomodoroCard({ pomodoro, onToggle }: { pomodoro: Pomodoro; onToggle: () => void }) {
+  const t = useT();
   const { sessionType, currentSession, sessionsPerCycle, timeLeft, duration, isRunning, reset, skip } = pomodoro;
   const isWork = sessionType === "work";
   const progress = Math.min(1, Math.max(0, 1 - timeLeft / duration));
@@ -19,11 +21,11 @@ export function PomodoroCard({ pomodoro, onToggle }: { pomodoro: Pomodoro; onTog
         icon={Target}
         aside={
           <span className={`text-[10px] px-2 py-0.5 rounded-full ${isWork ? "bg-primary/20 text-priority-high" : "bg-accent/40 text-accent-soft"}`}>
-            {SESSION_LABEL[sessionType]}
+            {t.pomodoro[sessionType]}
           </span>
         }
       >
-        Pomodoro
+        {t.pomodoro.title}
       </CardTitle>
 
       <div className="flex justify-center mb-4">
@@ -66,7 +68,7 @@ export function PomodoroCard({ pomodoro, onToggle }: { pomodoro: Pomodoro; onTog
               {formatClock(timeLeft)}
             </span>
             <span className="mt-1.5 text-[11px] text-dim">
-              Session {currentSession} of {sessionsPerCycle}
+              {t.pomodoro.session(currentSession, sessionsPerCycle)}
             </span>
           </div>
         </div>
@@ -86,25 +88,25 @@ export function PomodoroCard({ pomodoro, onToggle }: { pomodoro: Pomodoro; onTog
       <div className="flex items-center justify-center gap-3">
         <button
           onClick={reset}
-          aria-label="Reset timer"
+          aria-label={t.pomodoro.reset}
           className="w-9 h-9 rounded-xl flex items-center justify-center border border-border bg-surface-2 text-dim hover:border-line-strong hover:text-soft transition-colors"
         >
           <RotateCcw size={13} />
         </button>
         <button
           onClick={onToggle}
-          aria-label={isRunning ? "Pause timer" : "Start timer"}
+          aria-label={isRunning ? t.pomodoro.pause : t.pomodoro.start}
           className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-200 ${
             isRunning
-              ? "bg-surface-2 border border-border"
-              : "bg-gradient-to-br from-primary to-primary-strong shadow-[0_0_28px_rgb(139_30_45/0.45)]"
+              ? "bg-surface-2 border border-border text-foreground"
+              : "bg-gradient-to-br from-primary to-primary-strong text-primary-foreground shadow-[0_0_28px_rgb(139_30_45/0.45)]"
           }`}
         >
           {isRunning ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
         </button>
         <button
           onClick={skip}
-          aria-label="Skip session"
+          aria-label={t.pomodoro.skip}
           className="w-9 h-9 rounded-xl flex items-center justify-center border border-border bg-surface-2 text-dim hover:border-line-strong hover:text-soft transition-colors"
         >
           <SkipForward size={13} />

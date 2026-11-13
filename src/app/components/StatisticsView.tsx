@@ -3,7 +3,8 @@ import { Card, CardTitle } from "./Card";
 import { ActivityHeatmap, StatTile, formatMinutes } from "./Widgets";
 import type { History, Task } from "../types";
 import { PRIORITIES, PRIORITY_CONFIG } from "../constants";
-import { addDays, dateKey, formatRelativeDay, parseKey } from "../lib/date";
+import { addDays, dateKey, formatRelativeDay, formatShortDate } from "../lib/date";
+import { useT } from "../lib/i18n";
 
 const CHART_DAYS = 14;
 
@@ -20,37 +21,38 @@ const currentStreak = (history: History) => {
 };
 
 export function StatisticsView({ history, tasks, today }: { history: History; tasks: Task[]; today: string }) {
-  const days = Object.entries(history);
-  const totalSessions = days.reduce((s, [, v]) => s + v.sessions, 0);
-  const totalMinutes = days.reduce((s, [, v]) => s + v.minutes, 0);
-  const best = days.reduce<[string, number] | null>((b, [k, v]) => (!b || v.sessions > b[1] ? [k, v.sessions] : b), null);
+  const t = useT();
+  const days = Object.values(history);
+  const totalSessions = days.reduce((s, v) => s + v.sessions, 0);
+  const totalMinutes = days.reduce((s, v) => s + v.minutes, 0);
+  const best = days.reduce((b, v) => Math.max(b, v.sessions), 0);
   const streak = currentStreak(history);
 
-  const completed = tasks.filter((t) => t.completed).length;
-  const pending = tasks.filter((t) => !t.completed);
-  const overdue = pending.filter((t) => t.dueDate < today).length;
+  const completed = tasks.filter((x) => x.completed).length;
+  const pending = tasks.filter((x) => !x.completed);
+  const overdue = pending.filter((x) => x.dueDate < today).length;
   const rate = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-        <StatTile label="Total pomodoros" value={totalSessions} Icon={Flame} />
-        <StatTile label="Total focus time" value={formatMinutes(totalMinutes)} Icon={Clock} tone="accent" />
-        <StatTile label={`Day streak${best ? ` · best ${best[1]}/day` : ""}`} value={streak} Icon={Trophy} />
-        <StatTile label="Tasks completed" value={`${completed} (${rate}%)`} Icon={CheckSquare} tone="accent" />
+        <StatTile label={t.stats.totalPomodoros} value={totalSessions} Icon={Flame} />
+        <StatTile label={t.stats.totalFocus} value={formatMinutes(totalMinutes)} Icon={Clock} tone="accent" />
+        <StatTile label={`${t.stats.streak}${best ? t.stats.best(best) : ""}`} value={streak} Icon={Trophy} />
+        <StatTile label={t.stats.tasksCompleted} value={`${completed} (${rate}%)`} Icon={CheckSquare} tone="accent" />
       </div>
 
       <Card>
-        <CardTitle icon={BarChart2} aside={<span className="text-[11px] text-dim">Last {CHART_DAYS} days</span>}>
-          Focus sessions
+        <CardTitle icon={BarChart2} aside={<span className="text-[11px] text-dim">{t.stats.lastDays(CHART_DAYS)}</span>}>
+          {t.stats.focusSessions}
         </CardTitle>
         <SessionsChart history={history} />
       </Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardTitle icon={ListTodo} aside={overdue > 0 ? <span className="text-[11px] text-priority-high">{overdue} overdue</span> : undefined}>
-            Pending by priority
+          <CardTitle icon={ListTodo} aside={overdue > 0 ? <span className="text-[11px] text-priority-high">{t.stats.overdue(overdue)}</span> : undefined}>
+            {t.stats.pendingByPriority}
           </CardTitle>
           <PriorityBreakdown tasks={pending} />
         </Card>
@@ -60,15 +62,16 @@ export function StatisticsView({ history, tasks, today }: { history: History; ta
   );
 }
 
-/** Barras verticais, uma série: pomodoros por dia. Tooltip no hover/foco de cada coluna. */
+/** Barras verticais, uma série: pomodoros por dia. Tooltip no hover de cada coluna; tabela para leitores de tela. */
 function SessionsChart({ history }: { history: History }) {
+  const t = useT();
   const now = new Date();
   const data = Array.from({ length: CHART_DAYS }, (_, i) => {
     const d = addDays(now, i - (CHART_DAYS - 1));
     const key = dateKey(d);
     return {
       key,
-      weekday: d.toLocaleDateString("en-US", { weekday: "narrow" }),
+      weekday: d.toLocaleDateString(t.locale, { weekday: "narrow" }).toUpperCase(),
       sessions: history[key]?.sessions ?? 0,
       minutes: history[key]?.minutes ?? 0,
     };
@@ -85,7 +88,7 @@ function SessionsChart({ history }: { history: History }) {
           {data.map((d, i) => (
             <div key={d.key} className="group relative flex-1 h-full flex items-end justify-center rounded-sm hover:bg-muted/60">
               <div
-                className="w-full max-w-7 rounded-t bg-primary-soft transition-[height] duration-300 group-hover:brightness-125"
+                className="w-full max-w-7 rounded-t bg-primary-soft transition-[height] duration-300 group-hover:brightness-110"
                 style={{ height: `${(d.sessions / max) * 100}%`, minHeight: d.sessions > 0 ? 3 : 0 }}
               />
               <div
@@ -93,17 +96,15 @@ function SessionsChart({ history }: { history: History }) {
                   i < 3 ? "left-0" : i > CHART_DAYS - 4 ? "right-0" : "left-1/2 -translate-x-1/2"
                 }`}
               >
-                <p className="text-muted-foreground">{formatRelativeDay(d.key)}</p>
+                <p className="text-muted-foreground">{formatRelativeDay(t, d.key)}</p>
                 <p className="font-medium text-foreground">
-                  {d.sessions} session{d.sessions === 1 ? "" : "s"} · {formatMinutes(d.minutes)}
+                  {t.stats.sessions(d.sessions)} · {formatMinutes(d.minutes)}
                 </p>
               </div>
             </div>
           ))}
         </div>
-        {isEmpty && (
-          <p className="absolute inset-0 flex items-center justify-center text-xs text-dim">Complete a pomodoro to see it here.</p>
-        )}
+        {isEmpty && <p className="absolute inset-0 flex items-center justify-center text-xs text-dim">{t.stats.chartEmpty}</p>}
       </div>
       <div className="flex gap-0.5 pl-5 mt-1.5" aria-hidden="true">
         {data.map((d, i) => (
@@ -113,20 +114,19 @@ function SessionsChart({ history }: { history: History }) {
         ))}
       </div>
 
-      {/* Versão em tabela para leitores de tela */}
       <table className="sr-only">
-        <caption>Focus sessions in the last {CHART_DAYS} days</caption>
+        <caption>{t.stats.tableCaption(CHART_DAYS)}</caption>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Sessions</th>
-            <th>Focus minutes</th>
+            <th>{t.stats.colDate}</th>
+            <th>{t.stats.colSessions}</th>
+            <th>{t.stats.colMinutes}</th>
           </tr>
         </thead>
         <tbody>
           {data.map((d) => (
             <tr key={d.key}>
-              <td>{parseKey(d.key).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
+              <td>{formatShortDate(t, d.key)}</td>
               <td>{d.sessions}</td>
               <td>{d.minutes}</td>
             </tr>
@@ -138,16 +138,17 @@ function SessionsChart({ history }: { history: History }) {
 }
 
 function PriorityBreakdown({ tasks }: { tasks: Task[] }) {
-  if (tasks.length === 0) return <p className="py-6 text-center text-xs text-dim">Nothing pending. The void is calm.</p>;
+  const t = useT();
+  if (tasks.length === 0) return <p className="py-6 text-center text-xs text-dim">{t.stats.nothingPending}</p>;
   return (
     <ul className="flex flex-col gap-3">
       {PRIORITIES.map((p) => {
-        const count = tasks.filter((t) => t.priority === p).length;
+        const count = tasks.filter((x) => x.priority === p).length;
         const pct = Math.round((count / tasks.length) * 100);
         return (
           <li key={p}>
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-soft">{PRIORITY_CONFIG[p].label === "Med" ? "Medium" : PRIORITY_CONFIG[p].label}</span>
+              <span className="text-soft">{t.priorityFull[p]}</span>
               <span className="text-dim tabular-nums">
                 {count} · {pct}%
               </span>
