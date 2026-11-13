@@ -1,0 +1,180 @@
+@custom-variant dark (&:is(.dark *));
+
+/* Nocturne — paleta única (o app é sempre escuro) */
+:root {
+  color-scheme: dark;
+  --font-size: 16px;
+
+  /* Superfícies */
+  --background: #0B0B0B;
+  --sidebar: #0D0D0D;
+  --card: #111111;
+  --surface-2: #181818;
+  --muted: #1A1A1A;
+
+  /* Bordas */
+  --border: #2A2A2A;
+  --line: #222222;
+  --line-strong: #3A3A3A;
+
+  /* Texto */
+  --foreground: #F2F2F2;
+  --soft: #D8D8D8;
+  --muted-foreground: #8A8A8A;
+  --dim: #7E7E7E;
+  --faint: #3A3A3A;
+
+  /* Marca */
+  --primary: #8B1E2D;
+  --primary-strong: #6A1520;
+  --primary-soft: #C94D5E;
+  --primary-foreground: #F2F2F2;
+  --accent: #3A214D;
+  --accent-soft: #9A6EC0;
+  --accent-foreground: #F2F2F2;
+
+  /* Prioridades */
+  --priority-high: #E05C6A;
+  --priority-medium: #C4933A;
+  --priority-low: #4FA86A;
+
+  /* Mapa de calor (sequencial, um só matiz) */
+  --heat-0: #181818;
+  --heat-1: #3A1420;
+  --heat-2: #5C1E2E;
+  --heat-3: #7A1E2D;
+  --heat-4: #8B1E2D;
+
+  --ring: #C94D5E;
+  --radius: 0.75rem;
+
+  /* Tokens usados pelos componentes shadcn em components/ui */
+  --card-foreground: var(--foreground);
+  --popover: #161616;
+  --popover-foreground: var(--foreground);
+  --secondary: #1E1E1E;
+  --secondary-foreground: var(--foreground);
+  --destructive: #8B1E2D;
+  --destructive-foreground: var(--foreground);
+  --input: #161616;
+  --input-background: #161616;
+  --switch-background: #2A2A2A;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: #8B1E2D;
+  --chart-2: #3A214D;
+  --chart-3: #5C1E2E;
+  --chart-4: #7A1E2D;
+  --chart-5: #4A2A5D;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--foreground);
+  --sidebar-accent: #1E1E1E;
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+}
+
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-surface-2: var(--surface-2);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-soft: var(--soft);
+  --color-dim: var(--dim);
+  --color-faint: var(--faint);
+  --color-priority-high: var(--priority-high);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-low: var(--priority-low);
+  --color-heat-0: var(--heat-0);
+  --color-heat-1: var(--heat-1);
+  --color-heat-2: var(--heat-2);
+  --color-heat-3: var(--heat-3);
+  --color-heat-4: var(--heat-4);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Foco visível para navegação por teclado */
+  button:focus-visible,
+  [tabindex]:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Ícones nativos de data/hora visíveis no tema escuro */
+  input[type="date"],
+  input[type="time"] {
+    color-scheme: dark;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+    }
+  }
+}
